@@ -311,7 +311,7 @@ export async function POST(request: Request) {
 
     try {
       // Check if node modelSwitcher can be loaded dynamically
-      const { generateContent } = require("../../../../../modelSwitcher");
+      const { generateContent } = require("../../../../modelSwitcher");
       const aiResult = await generateContent({
         provider: providerName,
         tone: selectedTone,
