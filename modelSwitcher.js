@@ -1,10 +1,8 @@
 /**
  * Model Switcher
  * Central entry point for the Content Studio.
- *
  * Selects an AI provider, builds the correct prompt, generates content,
- * and returns a normalized response that can be passed to an automation
- * platform such as n8n, Zapier, or Make.
+ * strips any asterisks from the answer, and returns a normalized response.
  */
 
 const openai = require("./openai");
@@ -18,38 +16,22 @@ const PROVIDERS = {
   claude,
 };
 
-const FALLBACK_ORDER = ["claude", "openai", "gemini"];
+const FALLBACK_ORDER = ["gemini", "openai", "claude"];
 
 /**
  * Generate AI content using the selected provider.
- *
- * @param {Object} options
- * @param {string} options.provider - "openai" | "gemini" | "claude"
- * @param {string} options.contentType - Example: "social_caption"
- * @param {string} options.tone - Example: "professional"
- * @param {string} options.topic - The subject of the content
- * @param {number} [options.maxTokens=800]
- * @param {string[]} [options._tried] - Internal list of attempted providers
- *
- * @returns {Promise<Object>}
  */
 async function generateContent(options = {}) {
   const {
     provider,
-    contentType,
-    tone,
+    contentType = "social_caption",
+    tone = "Professional",
     topic,
     maxTokens = 800,
   } = options;
 
   if (!provider) {
-    throw new Error(
-      'A provider is required. Use "openai", "gemini", or "claude".'
-    );
-  }
-
-  if (!contentType) {
-    throw new Error("A contentType is required.");
+    throw new Error('A provider is required. Use "openai", "gemini", or "claude".');
   }
 
   if (!tone) {
@@ -60,20 +42,16 @@ async function generateContent(options = {}) {
     throw new Error("A topic is required.");
   }
 
-  const chosenProvider = PROVIDERS[provider];
+  const normalizedProvider = provider.toLowerCase().includes("openai") || provider.toLowerCase().includes("gpt")
+    ? "openai"
+    : provider.toLowerCase().includes("claude") || provider.toLowerCase().includes("anthropic")
+    ? "claude"
+    : "gemini";
+
+  const chosenProvider = PROVIDERS[normalizedProvider];
 
   if (!chosenProvider) {
-    throw new Error(
-      `Unknown provider "${provider}". Valid options are: ${Object.keys(
-        PROVIDERS
-      ).join(", ")}`
-    );
-  }
-
-  if (typeof chosenProvider.generate !== "function") {
-    throw new Error(
-      `The "${provider}" provider does not export a generate function.`
-    );
+    throw new Error(`Unknown provider "${provider}". Valid options are: gemini, openai, claude`);
   }
 
   const { systemPrompt, userPrompt } = buildPrompt({
@@ -89,9 +67,13 @@ async function generateContent(options = {}) {
       maxTokens,
     });
 
+    // Ensure asterisks are completely removed from generated content
+    const sanitizedText = (result.text || "").replace(/\*/g, "");
+
     return {
       ...result,
-      provider,
+      text: sanitizedText,
+      provider: normalizedProvider,
       contentType,
       tone,
       topic,
@@ -102,21 +84,13 @@ async function generateContent(options = {}) {
       error,
       options: {
         ...options,
+        provider: normalizedProvider,
         maxTokens,
       },
     });
   }
 }
 
-/**
- * Try another provider when the selected provider fails.
- *
- * @param {Object} params
- * @param {Error} params.error
- * @param {Object} params.options
- *
- * @returns {Promise<Object>}
- */
 async function handleFallback({ error, options }) {
   const triedProviders = options._tried || [options.provider];
 
@@ -125,11 +99,7 @@ async function handleFallback({ error, options }) {
   );
 
   if (!nextProvider) {
-    throw new Error(
-      `All AI providers failed. Last error from "${options.provider}": ${
-        error.message || "Unknown error"
-      }`
-    );
+    throw error;
   }
 
   console.warn(

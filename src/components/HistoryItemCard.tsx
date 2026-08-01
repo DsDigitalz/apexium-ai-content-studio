@@ -13,50 +13,48 @@ interface HistoryItemCardProps {
   onClick?: () => void;
 }
 
-// Helper to determine model-specific branding colors and icons
 const getModelStyles = (model: string) => {
   const normalized = model.toLowerCase();
   if (normalized.includes("gemini")) {
     return {
       icon: Sparkles,
-      colorClass: "text-blue-600 bg-blue-50/50 border-blue-200/60 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/40"
+      colorClass: "text-blue-400 bg-blue-500/10 border-blue-500/20"
     };
-  } else if (normalized.includes("gpt")) {
+  } else if (normalized.includes("gpt") || normalized.includes("openai")) {
     return {
       icon: Zap,
-      colorClass: "text-emerald-600 bg-emerald-50/50 border-emerald-200/60 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40"
+      colorClass: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
     };
   } else {
     return {
       icon: Brain,
-      colorClass: "text-orange-600 bg-orange-50/50 border-orange-200/60 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-900/40"
+      colorClass: "text-orange-400 bg-orange-500/10 border-orange-500/20"
     };
   }
 };
 
-// Helper to get tone-specific icons and colors
 const getToneStyles = (tone: string): { icon: LucideIcon; color: string } => {
   switch (tone.toLowerCase()) {
     case "professional":
-      return { icon: Briefcase, color: "text-blue-500 dark:text-blue-400" };
+      return { icon: Briefcase, color: "text-blue-400" };
     case "educational":
-      return { icon: BookOpen, color: "text-emerald-500 dark:text-emerald-400" };
+      return { icon: BookOpen, color: "text-emerald-400" };
     case "promotional":
-      return { icon: Megaphone, color: "text-pink-500 dark:text-pink-400" };
+      return { icon: Megaphone, color: "text-pink-400" };
     case "conversational":
-      return { icon: MessageSquare, color: "text-amber-500 dark:text-amber-400" };
+      return { icon: MessageSquare, color: "text-amber-400" };
     default:
-      return { icon: Sparkles, color: "text-slate-500 dark:text-slate-400" };
+      return { icon: Sparkles, color: "text-neutral-400" };
   }
 };
 
-export default function HistoryItemCard({ 
-  title, 
-  tone, 
-  model, 
-  date, 
+export default function HistoryItemCard({
+  title,
+  tone,
+  model,
+  date,
   isActive = false,
-  onClick 
+  onClick
 }: HistoryItemCardProps) {
   const modelStyle = getModelStyles(model);
   const toneStyle = getToneStyles(tone);
@@ -66,45 +64,35 @@ export default function HistoryItemCard({
   return (
     <div
       onClick={onClick}
-      className={`group relative flex flex-col gap-2 rounded-xl border p-3.5 shadow-2xs transition-all duration-200 hover:scale-[1.01] hover:shadow-xs cursor-pointer active:scale-99
-        ${isActive 
-          ? "border-indigo-500 bg-indigo-50/40 dark:border-indigo-700 dark:bg-indigo-950/30 ring-2 ring-indigo-500/10" 
-          : "border-slate-200/50 bg-white hover:border-indigo-200 dark:border-slate-800/40 dark:bg-slate-900/40 dark:hover:border-indigo-900/40"
+      className={`group relative flex flex-col gap-2 rounded-xl border p-3 transition-all duration-200 cursor-pointer
+        ${isActive
+          ? "border-indigo-500/40 bg-indigo-500/10 ring-1 ring-indigo-500/20"
+          : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
         }
       `}
     >
-      {/* Truncated Title Topic */}
-      <p className={`line-clamp-2 text-xs font-semibold leading-normal transition-colors
-        ${isActive ? "text-indigo-700 dark:text-indigo-300" : "text-slate-700 group-hover:text-indigo-600 dark:text-slate-300 dark:group-hover:text-indigo-400"}
+      <p className={`line-clamp-2 text-xs font-medium leading-normal transition-colors
+        ${isActive ? "text-indigo-300" : "text-neutral-300 group-hover:text-white"}
       `}>
         {title}
       </p>
 
-      {/* Badges and meta information footer */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
-        
-        {/* Badges list */}
-        <div className="flex items-center gap-1.5">
-          {/* AI Model Tag */}
-          <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-4xs font-medium ${modelStyle.colorClass}`}>
-            <ModelIcon className="h-2 w-2" />
-            <span>{model}</span>
+      <div className="flex flex-wrap items-center justify-between gap-1.5 mt-0.5">
+        <div className="flex items-center gap-1">
+          <span className={`inline-flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-xs font-medium ${modelStyle.colorClass}`}>
+            <ModelIcon className="h-2.5 w-2.5" />
+            <span className="text-xs">{model.replace("Google ", "").replace("OpenAI ", "").replace("Anthropic ", "")}</span>
           </span>
-
-          {/* Tone Tag */}
-          <span className="inline-flex items-center gap-1 rounded-md border border-slate-100 bg-slate-50/50 px-1.5 py-0.5 text-4xs font-medium text-slate-500 dark:border-slate-800 dark:bg-slate-900/20 dark:text-slate-400">
-            <ToneIcon className={`h-2 w-2 ${toneStyle.color}`} />
-            <span>{tone}</span>
+          <span className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-xs font-medium text-neutral-400">
+            <ToneIcon className={`h-2.5 w-2.5 ${toneStyle.color}`} />
+            <span className="text-xs">{tone}</span>
           </span>
         </div>
-
-        {/* Timestamp */}
-        <span className="inline-flex items-center gap-1 text-4xs font-medium text-slate-400 dark:text-slate-500">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-neutral-500">
           <Clock className="h-2.5 w-2.5" />
           <span>{date}</span>
         </span>
       </div>
-
     </div>
   );
 }
